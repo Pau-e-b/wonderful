@@ -141,7 +141,7 @@
     <button id="closePreview">×</button>
 
     <button id="sharePhoto">
-      Condividi / Salva
+      Salva
     </button>
   </div>
 
@@ -248,7 +248,9 @@
       canvas.width = width * pixelRatio;
       canvas.height = height * pixelRatio;
 
-      const ctx = canvas.getContext("2d");
+      const ctx = canvas.getContext("2d", {
+        willReadFrequently: true
+      });
 
       ctx.clearRect(
         0,
@@ -257,9 +259,9 @@
         canvas.height
       );
 
+
       /*
-        Disegna la fotocamera,
-        rispettando object-fit: cover
+        1. DISEGNA LA FOTOCAMERA
       */
 
       drawCameraCover(
@@ -271,20 +273,22 @@
 
 
       /*
-        Posizione reale della balena
-        in quel preciso istante.
+        2. CREA UN CANVAS SEPARATO
+           PER IL FRAME DELLA BALENA
       */
+
+      const whaleCanvas = document.createElement("canvas");
+
+      whaleCanvas.width = canvas.width;
+      whaleCanvas.height = canvas.height;
+
+      const whaleCtx = whaleCanvas.getContext("2d", {
+        willReadFrequently: true
+      });
 
       const rect = whale.getBoundingClientRect();
 
-      /*
-        Equivalente Canvas di:
-        mix-blend-mode: screen
-      */
-
-      ctx.globalCompositeOperation = "screen";
-
-      ctx.drawImage(
+      whaleCtx.drawImage(
         whale,
         rect.left * pixelRatio,
         rect.top * pixelRatio,
@@ -292,8 +296,86 @@
         rect.height * pixelRatio
       );
 
-      ctx.globalCompositeOperation = "source-over";
 
+      /*
+        3. LEGGE I PIXEL DI CAMERA E BALENA
+      */
+
+      const backgroundImage = ctx.getImageData(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+      const whaleImage = whaleCtx.getImageData(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+      const bg = backgroundImage.data;
+      const fg = whaleImage.data;
+
+
+      /*
+        4. SCREEN PIXEL PER PIXEL
+      */
+
+      for (let i = 0; i < bg.length; i += 4) {
+
+        const r = fg[i];
+        const g = fg[i + 1];
+        const b = fg[i + 2];
+        const a = fg[i + 3] / 255;
+
+        const luminosita = Math.max(r, g, b);
+
+        /*
+          Il nero e quasi-nero del video
+          viene ignorato completamente
+        */
+
+        if (luminosita < 12 || a === 0) {
+          continue;
+        }
+
+        const screenR =
+          255 - ((255 - bg[i]) * (255 - r) / 255);
+
+        const screenG =
+          255 - ((255 - bg[i + 1]) * (255 - g) / 255);
+
+        const screenB =
+          255 - ((255 - bg[i + 2]) * (255 - b) / 255);
+
+        bg[i] =
+          bg[i] * (1 - a) + screenR * a;
+
+        bg[i + 1] =
+          bg[i + 1] * (1 - a) + screenG * a;
+
+        bg[i + 2] =
+          bg[i + 2] * (1 - a) + screenB * a;
+      }
+
+
+      /*
+        5. RIMETTE LA FOTO COMPOSTA
+           NEL CANVAS
+      */
+
+      ctx.putImageData(
+        backgroundImage,
+        0,
+        0
+      );
+
+
+      /*
+        6. CREA LA FOTO FINALE
+      */
 
       canvas.toBlob((blob) => {
 
@@ -345,7 +427,7 @@
 
         } catch (e) {
 
-          console.log("Condivisione annullata", e);
+          console.log("Salvataggio annullato", e);
 
         }
 
