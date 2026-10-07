@@ -20,17 +20,18 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
+      z-index: 1;
     }
 
     #whale {
       position: fixed;
       top: 8%;
-      left: -70%;
-      width: 70%;
+      left: -80%;
+      width: 75%;
       z-index: 5;
       pointer-events: none;
-      mix-blend-mode: screen;
       opacity: 0;
+      mix-blend-mode: screen;
     }
 
     #whale.show {
@@ -40,10 +41,11 @@
 
     @keyframes attraversa {
       from {
-        left: -70%;
+        left: -80%;
       }
+
       to {
-        left: 100%;
+        left: 105%;
       }
     }
 
@@ -61,10 +63,20 @@
 
 <body>
 
-  <video id="camera" autoplay playsinline muted></video>
+  <video
+    id="camera"
+    autoplay
+    playsinline
+    muted>
+  </video>
 
-  <video id="whale" autoplay muted loop playsinline>
-    <source src="balena.mp4" type="video/mp4">
+  <video
+    id="whale"
+    muted
+    loop
+    playsinline
+    preload="auto">
+    <source src="balena_ok.mp4" type="video/mp4">
   </video>
 
   <button id="start">Apri fotocamera</button>
@@ -86,7 +98,13 @@
         camera.srcObject = stream;
         start.style.display = "none";
 
-        whale.play();
+        whale.currentTime = 0;
+
+        try {
+          await whale.play();
+        } catch (e) {
+          console.log("Avvio video:", e);
+        }
 
         setTimeout(() => {
           whale.classList.add("show");
