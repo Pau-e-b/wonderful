@@ -63,19 +63,9 @@
 
 <body>
 
-  <video
-    id="camera"
-    autoplay
-    playsinline
-    muted>
-  </video>
+  <video id="camera" autoplay playsinline muted></video>
 
-  <video
-    id="whale"
-    muted
-    loop
-    playsinline
-    preload="auto">
+  <video id="whale" muted loop playsinline preload="auto">
     <source src="balena_ok.mp4" type="video/mp4">
   </video>
 
@@ -99,19 +89,14 @@
         start.style.display = "none";
 
         whale.currentTime = 0;
-
-        try {
-          await whale.play();
-        } catch (e) {
-          console.log("Avvio video:", e);
-        }
+        await whale.play();
 
         setTimeout(() => {
           whale.classList.add("show");
         }, 5000);
 
       } catch (error) {
-        alert("Impossibile aprire la fotocamera: " + error.message);
+        alert("Errore: " + error.message);
       }
     });
   </script>
