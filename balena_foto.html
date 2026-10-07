@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Balena AR Foto</title>
+
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: black;
+    }
+
+    #camera {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+    }
+
+    #whale {
+      position: fixed;
+      top: -20%;
+      left: -330%;
+      width: 330%;
+      z-index: 5;
+      pointer-events: none;
+      opacity: 0;
+      mix-blend-mode: screen;
+    }
+
+    #whale.show {
+      opacity: 1;
+      animation: attraversa 25s linear forwards;
+    }
+
+    @keyframes attraversa {
+      from {
+        left: -330%;
+      }
+
+      to {
+        left: 110%;
+      }
+    }
+
+    #start {
+      position: fixed;
+      left: 50%;
+      bottom: 40px;
+      transform: translateX(-50%);
+      padding: 14px 20px;
+      font-size: 17px;
+      z-index: 10;
+    }
+
+    #shoot {
+      display: none;
+      position: fixed;
+      left: 50%;
+      bottom: 35px;
+      transform: translateX(-50%);
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      border: 5px solid white;
+      background: rgba(255,255,255,0.35);
+      z-index: 20;
+    }
+
+    #preview {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: black;
+      z-index: 100;
+    }
+
+    #previewImage {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    #closePreview {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 110;
+      font-size: 30px;
+      color: white;
+      background: rgba(0,0,0,0.55);
+      border: 0;
+      border-radius: 50%;
+      width: 48px;
+      height: 48px;
+    }
+
+    #sharePhoto {
+      position: fixed;
+      bottom: 35px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 110;
+      padding: 14px 22px;
+      font-size: 17px;
+      border: 0;
+      border-radius: 24px;
+      background: white;
+      color: black;
+    }
+
+    #captureCanvas {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <video id="camera" autoplay playsinline muted></video>
+
+  <video id="whale" muted loop playsinline preload="auto">
+    <source src="balena_ok.mp4" type="video/mp4">
+  </video>
+
+  <button id="start">Apri fotocamera</button>
+
+  <button id="shoot" aria-label="Scatta foto"></button>
+
+  <canvas id="captureCanvas"></canvas>
+
+  <div id="preview">
+    <img id="previewImage">
+
+    <button id="closePreview">×</button>
+
+    <button id="sharePhoto">
+      Condividi / Salva
+    </button>
+  </div>
+
+  <script>
+    const camera = document.getElementById("camera");
+    const whale = document.getElementById("whale");
+    const start = document.getElementById("start");
+    const shoot = document.getElementById("shoot");
+
+    const canvas = document.getElementById("captureCanvas");
+    const preview = document.getElementById("preview");
+    const previewImage = document.getElementById("previewImage");
+    const closePreview = document.getElementById("closePreview");
+    const sharePhoto = document.getElementById("sharePhoto");
+
+    let capturedBlob = null;
+    let capturedURL = null;
+
+    start.addEventListener("click", async () => {
+
+      try {
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: "environment" }
+          },
+          audio: false
+        });
+
+        camera.srcObject = stream;
+
+        start.style.display = "none";
+        shoot.style.display = "block";
+
+        whale.currentTime = 0;
+
+        try {
+          await whale.play();
+        } catch (e) {
+          console.log("Errore avvio balena:", e);
+        }
+
+        setTimeout(() => {
+          whale.classList.add("show");
+        }, 2500);
+
+      } catch (error) {
+
+        alert(
+          "Impossibile aprire la fotocamera: " +
+          error.message
+        );
+
+      }
+    });
+
+
+    function drawCameraCover(ctx, video, canvasWidth, canvasHeight) {
+
+      const videoWidth = video.videoWidth;
+      const videoHeight = video.videoHeight;
+
+      const videoRatio = videoWidth / videoHeight;
+      const canvasRatio = canvasWidth / canvasHeight;
+
+      let sx = 0;
+      let sy = 0;
+      let sw = videoWidth;
+      let sh = videoHeight;
+
+      if (videoRatio > canvasRatio) {
+
+        sw = videoHeight * canvasRatio;
+        sx = (videoWidth - sw) / 2;
+
+      } else {
+
+        sh = videoWidth / canvasRatio;
+        sy = (videoHeight - sh) / 2;
+
+      }
+
+      ctx.drawImage(
+        video,
+        sx,
+        sy,
+        sw,
+        sh,
+        0,
+        0,
+        canvasWidth,
+        canvasHeight
+      );
+    }
+
+
+    shoot.addEventListener("click", () => {
+
+      const pixelRatio = window.devicePixelRatio || 1;
+
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      canvas.width = width * pixelRatio;
+      canvas.height = height * pixelRatio;
+
+      const ctx = canvas.getContext("2d");
+
+      ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+      /*
+        Disegna la fotocamera,
+        rispettando object-fit: cover
+      */
+
+      drawCameraCover(
+        ctx,
+        camera,
+        canvas.width,
+        canvas.height
+      );
+
+
+      /*
+        Posizione reale della balena
+        in quel preciso istante.
+      */
+
+      const rect = whale.getBoundingClientRect();
+
+      /*
+        Equivalente Canvas di:
+        mix-blend-mode: screen
+      */
+
+      ctx.globalCompositeOperation = "screen";
+
+      ctx.drawImage(
+        whale,
+        rect.left * pixelRatio,
+        rect.top * pixelRatio,
+        rect.width * pixelRatio,
+        rect.height * pixelRatio
+      );
+
+      ctx.globalCompositeOperation = "source-over";
+
+
+      canvas.toBlob((blob) => {
+
+        capturedBlob = blob;
+
+        if (capturedURL) {
+          URL.revokeObjectURL(capturedURL);
+        }
+
+        capturedURL = URL.createObjectURL(blob);
+
+        previewImage.src = capturedURL;
+
+        preview.style.display = "block";
+
+      }, "image/jpeg", 0.95);
+
+    });
+
+
+    closePreview.addEventListener("click", () => {
+
+      preview.style.display = "none";
+
+    });
+
+
+    sharePhoto.addEventListener("click", async () => {
+
+      if (!capturedBlob) return;
+
+      const file = new File(
+        [capturedBlob],
+        "balena-ar.jpg",
+        { type: "image/jpeg" }
+      );
+
+      if (
+        navigator.share &&
+        navigator.canShare &&
+        navigator.canShare({ files: [file] })
+      ) {
+
+        try {
+
+          await navigator.share({
+            files: [file]
+          });
+
+        } catch (e) {
+
+          console.log("Condivisione annullata", e);
+
+        }
+
+      } else {
+
+        window.open(capturedURL, "_blank");
+
+      }
+
+    });
+
+  </script>
+
+</body>
+</html>
