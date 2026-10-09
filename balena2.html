@@ -26,8 +26,8 @@
     #whale {
       position: fixed;
       top: -20%;
-      left: -220%;
-      width: 220%;
+      left: -200%;
+      width: 200%;
       z-index: 5;
       pointer-events: none;
       opacity: 0;
@@ -48,33 +48,84 @@
 
     @keyframes andata {
       0% {
-        left: -220%;
-        width: 220%;
+        left: -200%;
+        width: 200%;
+        top: -20%;
+      }
+
+      16.67% {
+        width: 280%;
+        top: -20%;
+      }
+
+      33.33% {
+        width: 360%;
+        top: -27%;
       }
 
       50% {
-        width: 360%;
+        width: 430%;
+        top: -32%;
+      }
+
+      66.67% {
+        width: 340%;
+        top: -25%;
+      }
+
+      83.33% {
+        width: 200%;
+        top: -20%;
       }
 
       100% {
         left: 110%;
-        width: 220%;
+        width: 150%;
+        top: -18%;
       }
     }
 
     @keyframes ritorno {
       0% {
         left: 110%;
-        width: 180%;
+        width: 100%;
+        top: -10%;
+      }
+
+      16.67% {
+        left: 65%;
+        width: 220%;
+        top: -17%;
+      }
+
+      33.33% {
+        left: 15%;
+        width: 360%;
+        top: -24%;
       }
 
       50% {
-        width: 320%;
+        left: -70%;
+        width: 500%;
+        top: -30%;
+      }
+
+      66.67% {
+        left: -160%;
+        width: 450%;
+        top: -27%;
+      }
+
+      83.33% {
+        left: -250%;
+        width: 250%;
+        top: -21%;
       }
 
       100% {
-        left: -420%;
-        width: 420%;
+        left: -320%;
+        width: 100%;
+        top: -18%;
       }
     }
 
@@ -304,14 +355,12 @@
         canvas.height
       );
 
-
       drawCameraCover(
         ctx,
         camera,
         canvas.width,
         canvas.height
       );
-
 
       const whaleCanvas = document.createElement("canvas");
 
@@ -328,7 +377,6 @@
       const whaleTop = rect.top * pixelRatio;
       const whaleWidth = rect.width * pixelRatio;
       const whaleHeight = rect.height * pixelRatio;
-
 
       if (whale.classList.contains("returning")) {
 
@@ -363,7 +411,6 @@
 
       }
 
-
       const backgroundImage = ctx.getImageData(
         0,
         0,
@@ -380,7 +427,6 @@
 
       const bg = backgroundImage.data;
       const fg = whaleImage.data;
-
 
       for (let i = 0; i < bg.length; i += 4) {
 
@@ -414,13 +460,11 @@
           bg[i + 2] * (1 - a) + screenB * a;
       }
 
-
       ctx.putImageData(
         backgroundImage,
         0,
         0
       );
-
 
       canvas.toBlob((blob) => {
 
