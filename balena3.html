@@ -26,8 +26,8 @@
     #whale {
       position: fixed;
       top: -20%;
-      left: -220%;
-      width: 200%;
+      left: -250%;
+      width: 250%;
       z-index: 5;
       pointer-events: none;
       opacity: 0;
@@ -48,13 +48,21 @@
 
     @keyframes andata {
       0% {
-        left: -220%;
-        width: 200%;
+        left: -250%;
+        width: 250%;
+      }
+
+      25% {
+        width: 400%;
+      }
+
+      75% {
+        width: 400%;
       }
 
       100% {
         left: 110%;
-        width: 400%;
+        width: 250%;
       }
     }
 
@@ -64,9 +72,17 @@
         width: 100%;
       }
 
+      25% {
+        width: 500%;
+      }
+
+      75% {
+        width: 350%;
+      }
+
       100% {
         left: -420%;
-        width: 500%;
+        width: 200%;
       }
     }
 
@@ -296,14 +312,12 @@
         canvas.height
       );
 
-
       drawCameraCover(
         ctx,
         camera,
         canvas.width,
         canvas.height
       );
-
 
       const whaleCanvas = document.createElement("canvas");
 
@@ -320,7 +334,6 @@
       const whaleTop = rect.top * pixelRatio;
       const whaleWidth = rect.width * pixelRatio;
       const whaleHeight = rect.height * pixelRatio;
-
 
       if (whale.classList.contains("returning")) {
 
@@ -355,7 +368,6 @@
 
       }
 
-
       const backgroundImage = ctx.getImageData(
         0,
         0,
@@ -372,7 +384,6 @@
 
       const bg = backgroundImage.data;
       const fg = whaleImage.data;
-
 
       for (let i = 0; i < bg.length; i += 4) {
 
@@ -406,13 +417,11 @@
           bg[i + 2] * (1 - a) + screenB * a;
       }
 
-
       ctx.putImageData(
         backgroundImage,
         0,
         0
       );
-
 
       canvas.toBlob((blob) => {
 
