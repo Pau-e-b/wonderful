@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Balena AR Test</title>
+  <title>Balena AR Foto</title>
 
   <style>
     html, body {
@@ -25,28 +25,48 @@
 
     #whale {
       position: fixed;
-      top: -25%;
-      left: -230%;
-      width: 330%;
-      max-width: none;
+      top: -20%;
+      left: -220%;
+      width: 200%;
       z-index: 5;
       pointer-events: none;
       opacity: 0;
       mix-blend-mode: screen;
+      transform-origin: center center;
     }
 
-    #whale.show {
+    #whale.outgoing {
       opacity: 1;
-      animation: whaleSwimAcross 20s linear forwards;
+      animation: andata 25s linear forwards;
     }
 
-    @keyframes whaleSwimAcross {
-      from {
-        left: -230%;
+    #whale.returning {
+      opacity: 1;
+      transform: scaleX(-1);
+      animation: ritorno 25s linear forwards;
+    }
+
+    @keyframes andata {
+      0% {
+        left: -220%;
+        width: 200%;
       }
 
-      to {
+      100% {
         left: 110%;
+        width: 400%;
+      }
+    }
+
+    @keyframes ritorno {
+      0% {
+        left: 110%;
+        width: 100%;
+      }
+
+      100% {
+        left: -420%;
+        width: 500%;
       }
     }
 
@@ -59,36 +79,112 @@
       font-size: 17px;
       z-index: 10;
     }
+
+    #shoot {
+      display: none;
+      position: fixed;
+      left: 50%;
+      bottom: 35px;
+      transform: translateX(-50%);
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      border: 5px solid white;
+      background: rgba(255,255,255,0.35);
+      z-index: 20;
+    }
+
+    #preview {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: black;
+      z-index: 100;
+    }
+
+    #previewImage {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    #closePreview {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 110;
+      font-size: 30px;
+      color: white;
+      background: rgba(0,0,0,0.55);
+      border: 0;
+      border-radius: 50%;
+      width: 48px;
+      height: 48px;
+    }
+
+    #sharePhoto {
+      position: fixed;
+      bottom: 35px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 110;
+      padding: 14px 22px;
+      font-size: 17px;
+      border: 0;
+      border-radius: 24px;
+      background: white;
+      color: black;
+    }
+
+    #captureCanvas {
+      display: none;
+    }
   </style>
 </head>
 
 <body>
 
-  <video
-    id="camera"
-    autoplay
-    playsinline
-    muted>
-  </video>
+  <video id="camera" autoplay playsinline muted></video>
 
-  <video
-    id="whale"
-    muted
-    loop
-    playsinline
-    preload="auto">
+  <video id="whale" muted loop playsinline preload="auto">
     <source src="balena_ok.mp4" type="video/mp4">
   </video>
 
   <button id="start">Apri fotocamera</button>
 
+  <button id="shoot" aria-label="Scatta foto"></button>
+
+  <canvas id="captureCanvas"></canvas>
+
+  <div id="preview">
+    <img id="previewImage">
+
+    <button id="closePreview">×</button>
+
+    <button id="sharePhoto">
+      Salva
+    </button>
+  </div>
+
   <script>
     const camera = document.getElementById("camera");
     const whale = document.getElementById("whale");
     const start = document.getElementById("start");
+    const shoot = document.getElementById("shoot");
+
+    const canvas = document.getElementById("captureCanvas");
+    const preview = document.getElementById("preview");
+    const previewImage = document.getElementById("previewImage");
+    const closePreview = document.getElementById("closePreview");
+    const sharePhoto = document.getElementById("sharePhoto");
+
+    let capturedBlob = null;
+    let capturedURL = null;
 
     start.addEventListener("click", async () => {
+
       try {
+
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: { ideal: "environment" }
@@ -97,24 +193,289 @@
         });
 
         camera.srcObject = stream;
+
         start.style.display = "none";
+        shoot.style.display = "block";
 
         whale.currentTime = 0;
 
         try {
           await whale.play();
         } catch (e) {
-          console.log("Errore avvio video:", e);
+          console.log("Errore avvio balena:", e);
         }
 
         setTimeout(() => {
-          whale.classList.add("show");
-        }, 5000);
+          whale.classList.add("outgoing");
+        }, 2500);
 
       } catch (error) {
-        alert("Impossibile aprire la fotocamera: " + error.message);
+
+        alert(
+          "Impossibile aprire la fotocamera: " +
+          error.message
+        );
+
       }
     });
+
+
+    whale.addEventListener("animationend", () => {
+
+      if (whale.classList.contains("outgoing")) {
+
+        setTimeout(() => {
+
+          whale.classList.remove("outgoing");
+          whale.classList.add("returning");
+
+        }, 4000);
+
+      }
+
+    });
+
+
+    function drawCameraCover(ctx, video, canvasWidth, canvasHeight) {
+
+      const videoWidth = video.videoWidth;
+      const videoHeight = video.videoHeight;
+
+      const videoRatio = videoWidth / videoHeight;
+      const canvasRatio = canvasWidth / canvasHeight;
+
+      let sx = 0;
+      let sy = 0;
+      let sw = videoWidth;
+      let sh = videoHeight;
+
+      if (videoRatio > canvasRatio) {
+
+        sw = videoHeight * canvasRatio;
+        sx = (videoWidth - sw) / 2;
+
+      } else {
+
+        sh = videoWidth / canvasRatio;
+        sy = (videoHeight - sh) / 2;
+
+      }
+
+      ctx.drawImage(
+        video,
+        sx,
+        sy,
+        sw,
+        sh,
+        0,
+        0,
+        canvasWidth,
+        canvasHeight
+      );
+    }
+
+
+    shoot.addEventListener("click", () => {
+
+      const pixelRatio = window.devicePixelRatio || 1;
+
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      canvas.width = width * pixelRatio;
+      canvas.height = height * pixelRatio;
+
+      const ctx = canvas.getContext("2d", {
+        willReadFrequently: true
+      });
+
+      ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+
+      drawCameraCover(
+        ctx,
+        camera,
+        canvas.width,
+        canvas.height
+      );
+
+
+      const whaleCanvas = document.createElement("canvas");
+
+      whaleCanvas.width = canvas.width;
+      whaleCanvas.height = canvas.height;
+
+      const whaleCtx = whaleCanvas.getContext("2d", {
+        willReadFrequently: true
+      });
+
+      const rect = whale.getBoundingClientRect();
+
+      const whaleLeft = rect.left * pixelRatio;
+      const whaleTop = rect.top * pixelRatio;
+      const whaleWidth = rect.width * pixelRatio;
+      const whaleHeight = rect.height * pixelRatio;
+
+
+      if (whale.classList.contains("returning")) {
+
+        whaleCtx.save();
+
+        whaleCtx.translate(
+          whaleLeft + whaleWidth,
+          whaleTop
+        );
+
+        whaleCtx.scale(-1, 1);
+
+        whaleCtx.drawImage(
+          whale,
+          0,
+          0,
+          whaleWidth,
+          whaleHeight
+        );
+
+        whaleCtx.restore();
+
+      } else {
+
+        whaleCtx.drawImage(
+          whale,
+          whaleLeft,
+          whaleTop,
+          whaleWidth,
+          whaleHeight
+        );
+
+      }
+
+
+      const backgroundImage = ctx.getImageData(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+      const whaleImage = whaleCtx.getImageData(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+      const bg = backgroundImage.data;
+      const fg = whaleImage.data;
+
+
+      for (let i = 0; i < bg.length; i += 4) {
+
+        const r = fg[i];
+        const g = fg[i + 1];
+        const b = fg[i + 2];
+        const a = fg[i + 3] / 255;
+
+        const luminosita = Math.max(r, g, b);
+
+        if (luminosita < 12 || a === 0) {
+          continue;
+        }
+
+        const screenR =
+          255 - ((255 - bg[i]) * (255 - r) / 255);
+
+        const screenG =
+          255 - ((255 - bg[i + 1]) * (255 - g) / 255);
+
+        const screenB =
+          255 - ((255 - bg[i + 2]) * (255 - b) / 255);
+
+        bg[i] =
+          bg[i] * (1 - a) + screenR * a;
+
+        bg[i + 1] =
+          bg[i + 1] * (1 - a) + screenG * a;
+
+        bg[i + 2] =
+          bg[i + 2] * (1 - a) + screenB * a;
+      }
+
+
+      ctx.putImageData(
+        backgroundImage,
+        0,
+        0
+      );
+
+
+      canvas.toBlob((blob) => {
+
+        capturedBlob = blob;
+
+        if (capturedURL) {
+          URL.revokeObjectURL(capturedURL);
+        }
+
+        capturedURL = URL.createObjectURL(blob);
+
+        previewImage.src = capturedURL;
+
+        preview.style.display = "block";
+
+      }, "image/jpeg", 0.95);
+
+    });
+
+
+    closePreview.addEventListener("click", () => {
+
+      preview.style.display = "none";
+
+    });
+
+
+    sharePhoto.addEventListener("click", async () => {
+
+      if (!capturedBlob) return;
+
+      const file = new File(
+        [capturedBlob],
+        "balena-ar.jpg",
+        { type: "image/jpeg" }
+      );
+
+      if (
+        navigator.share &&
+        navigator.canShare &&
+        navigator.canShare({ files: [file] })
+      ) {
+
+        try {
+
+          await navigator.share({
+            files: [file]
+          });
+
+        } catch (e) {
+
+          console.log("Salvataggio annullato", e);
+
+        }
+
+      } else {
+
+        window.open(capturedURL, "_blank");
+
+      }
+
+    });
+
   </script>
 
 </body>
