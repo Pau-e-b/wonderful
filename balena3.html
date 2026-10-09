@@ -50,31 +50,38 @@
       0% {
         left: -250%;
         width: 250%;
+        top: -20%;
       }
 
       16.67% {
-        width: 290%;
+        width: 280%;
+        top: -20%;
       }
 
       33.33% {
-        width: 350%;
+        width: 380%;
+        top: -28%;
       }
 
       50% {
         width: 430%;
+        top: -32%;
       }
 
       66.67% {
-        width: 390%;
+        width: 340%;
+        top: -24%;
       }
 
       83.33% {
-        width: 300%;
+        width: 250%;
+        top: -20%;
       }
 
       100% {
         left: 110%;
-        width: 220%;
+        width: 200%;
+        top: -18%;
       }
     }
 
@@ -82,31 +89,38 @@
       0% {
         left: 110%;
         width: 100%;
+        top: -10%;
       }
 
       16.67% {
-        width: 160%;
+        width: 300%;
+        top: -22%;
       }
 
       33.33% {
-        width: 300%;
+        width: 500%;
+        top: -30%;
       }
 
       50% {
-        width: 500%;
+        width: 350%;
+        top: -24%;
       }
 
       66.67% {
-        width: 420%;
+        width: 200%;
+        top: -20%;
       }
 
       83.33% {
-        width: 300%;
+        width: 200%;
+        top: -20%;
       }
 
       100% {
-        left: -420%;
-        width: 200%;
+        left: -320%;
+        width: 180%;
+        top: -18%;
       }
     }
 
@@ -259,7 +273,6 @@
       }
     });
 
-
     whale.addEventListener("animationend", () => {
 
       if (whale.classList.contains("outgoing")) {
@@ -274,7 +287,6 @@
       }
 
     });
-
 
     function drawCameraCover(ctx, video, canvasWidth, canvasHeight) {
 
@@ -313,7 +325,6 @@
         canvasHeight
       );
     }
-
 
     shoot.addEventListener("click", () => {
 
@@ -465,13 +476,11 @@
 
     });
 
-
     closePreview.addEventListener("click", () => {
 
       preview.style.display = "none";
 
     });
-
 
     sharePhoto.addEventListener("click", async () => {
 
